@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>График отпусков — Казахстан</title>
+<style>
+:root{--ink:#17243b;--muted:#66748b;--line:#e4eaf2;--bg:#f4f7fb;--blue:#315efb;--teal:#0f9d8a;--gold:#c58a19;--red:#c43d4d}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,Segoe UI,Arial,sans-serif}
+header{background:linear-gradient(120deg,#172b50,#315efb);color:white;padding:34px max(22px,calc((100% - 1180px)/2))}
+header h1{margin:0 0 7px;font-size:clamp(25px,4vw,36px)}header p{margin:0;color:#dce5ff;max-width:760px}
+main{max-width:1180px;margin:24px auto;padding:0 18px 50px}
+.toolbar,.panel{background:white;border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:0 6px 22px #20345b0a}
+.toolbar{display:flex;gap:16px;align-items:end;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:6px}.field label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+select,input,textarea{font:inherit;border:1px solid #d7dfeb;border-radius:9px;padding:10px 12px;color:var(--ink);background:white}
+button{border:0;border-radius:10px;padding:11px 16px;background:var(--blue);color:white;font-weight:700;cursor:pointer}
+button.secondary{background:#edf2ff;color:#2549c9}button.ghost{background:#f0f3f8;color:#33415a}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.stat{background:white;border:1px solid var(--line);border-radius:14px;padding:15px}.stat small{color:var(--muted);display:block}.stat strong{font-size:25px}
+.layout{display:grid;grid-template-columns:1.25fr .75fr;gap:18px}
+h2{font-size:18px;margin:0 0 14px}.employee{border:1px solid var(--line);border-radius:12px;padding:15px;margin-bottom:12px}
+.employee-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}.employee-head strong{font-size:16px}.role{font-size:12px;color:var(--muted)}
+.periods{display:grid;grid-template-columns:1fr 1fr;gap:10px}.period{background:#f7f9fc;border-radius:10px;padding:11px}.period label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}
+.period input{width:100%;padding:8px}.period .type{font-size:12px;margin-top:6px;color:#3153a8}
+.status{font-size:12px;font-weight:700;border-radius:20px;padding:5px 9px;background:#e6f6f2;color:#087c6e}.status.bad{background:#fff0f0;color:var(--red)}
+.note{font-size:13px;color:var(--muted);margin:8px 0 0}
+.legend{display:flex;gap:15px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:12px 0}.dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:9px 7px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:700}
+.timeline{display:grid;grid-template-columns:repeat(12,minmax(48px,1fr));gap:5px;overflow-x:auto}.month{min-width:48px}.month b{font-size:11px;color:var(--muted);display:block;margin-bottom:6px}.bar{height:13px;border-radius:4px;margin:3px 0;background:#edf1f7}.bar.a{background:#6688f7}.bar.b{background:#36b8a5}.bar.c{background:#e6b24f}
+.alert{padding:12px 14px;border-radius:10px;background:#fff7e6;color:#805a12;font-size:13px;margin-top:12px}
+.ok{background:#eaf8f2;color:#176a51}.error{background:#fff0f0;color:#a32c3a}
+.small{font-size:12px;color:var(--muted)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+textarea{width:100%;min-height:110px;font:13px/1.5 ui-monospace,monospace}
+footer{font-size:12px;color:var(--muted);padding:12px 2px}a{color:#315efb}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:540px){.periods{grid-template-columns:1fr}.toolbar>*{width:100%}.toolbar button{width:auto}.stats{gap:8px}.stat strong{font-size:21px}}
+@media print{body{background:white}.toolbar button,.actions,footer a{display:none}.panel,.stat{box-shadow:none;break-inside:avoid}header{background:#243d70!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<header><h1>График отпусков сотрудников</h1><p>Планирование отпусков для трех сотрудников с учетом основного и экологического отпусков, праздничных дней и запрета пересечений.</p></header>
+<main>
+<section class="toolbar">
+ <div class="field"><label for="year">Год планирования</label><select id="year"><option>2026</option><option selected>2027</option><option>2028</option></select></div>
+ <div class="field"><label for="start">Начало первого отпуска</label><input type="date" id="start" value="2027-01-11"></div>
+ <div class="field"><label for="split">Продолжительность частей</label><select id="split"><option value="20" selected>20 + 20 дней</option><option value="14">14 + 26 дней</option><option value="16">16 + 24 дня</option></select></div>
+ <button id="generate">Сформировать график</button><button class="secondary" id="print">Печать / PDF</button>
+</section>
+<section class="stats">
+ <div class="stat"><small>Сотрудников</small><strong>3</strong></div>
+ <div class="stat"><small>Отпуск на человека</small><strong>40 дней</strong></div>
+ <div class="stat"><small>Основной отпуск</small><strong>30 дней</strong></div>
+ <div class="stat"><small>Экологический</small><strong>10 дней</strong></div>
+</section>
+<div class="layout">
+ <section class="panel">
+  <h2>Сотрудники и даты отпусков</h2>
+  <div id="employees"></div>
+  <div id="validation" class="alert ok">График сформирован. Проверьте даты и сохраните утвержденную версию.</div>
+  <div class="actions"><button id="check">Проверить график</button><button class="ghost" id="csv">Скачать CSV</button></div>
+ </section>
+ <section>
+  <div class="panel"><h2>Загрузка по месяцам</h2><div id="timeline" class="timeline"></div><div class="legend"><span><i class="dot" style="background:#6688f7"></i>Айгерим</span><span><i class="dot" style="background:#36b8a5"></i>Данияр</span><span><i class="dot" style="background:#e6b24f"></i>Мария</span></div><p class="small">Полосы показывают месяцы, в которых сотрудник находится в отпуске.</p></div>
+  <div class="panel"><h2>Сводная таблица</h2><div id="summary"></div></div>
+  <div class="panel"><h2>Праздничные дни для расчета</h2><p class="small">Укажите даты официальных праздничных дней через запятую. Праздничные дни не включаются в продолжительность оплачиваемого отпуска; обычные субботы и воскресенья включаются.</p><textarea id="holidays"></textarea><div class="actions"><button class="secondary" id="applyHolidays">Применить даты</button></div><p class="small" id="holidayInfo"></p></div>
+ </section>
+</div>
+<div class="panel"><h2>Правила расчета</h2><ul>
+<li>30 дней основного + 10 дней экологического отпуска = 40 календарных дней.</li>
+<li>Две части по умолчанию по 20 дней; экологический отпуск включен в первую часть: 10 экологических + 10 основных дней. Вторая часть — 20 основных дней.</li>
+<li>Праздничные дни РК, попавшие в отпуск, не засчитываются в его продолжительность, поэтому дата окончания автоматически сдвигается.</li>
+<li>Суббота и воскресенье входят в календарные дни отпуска. Перенесенные выходные сами по себе не исключаются, если дата не является официальным праздничным днем.</li>
+<li>Интервалы отпусков разных сотрудников не должны пересекаться. Одна из частей не менее 14 дней.</li>
+</ul><div class="alert">Важно: календарь праздничных дней 2027 года в этом шаблоне предварительный. Перед утверждением графика сверьте даты и переносы с актуальной публикацией Минтруда РК. Экологический отпуск в интерфейсе считается дополнительным оплачиваемым отпуском на 10 дней — проверьте основание и право конкретного работника по трудовому/коллективному договору и применимым нормам.</div>
+<p class="small">Правовая основа: Трудовой кодекс РК, статьи 90 (праздничные дни не учитываются; основной и дополнительный отпуск суммируются), 92 (разделение по соглашению сторон, одна часть не менее 14 календарных дней), 93 (график отпусков). <a href="https://www.gov.kz/org/sud/documents/details/44690" target="_blank" rel="noopener">Текст Трудового кодекса на gov.kz</a>. Официальный производственный календарь 2026: <a href="https://www.gov.kz/org/enbek/documents/details/932608?lang=ru" target="_blank" rel="noopener">gov.kz</a>.</p>
+</div>
+<footer>Демо-сайт работает локально в браузере. Изменения не отправляются на сервер. Для постоянного хранения используйте CSV или печать в PDF.</footer>
+</main>
+<script>
+const people=[
+ {name:"Айгерим Садыкова",role:"Специалист отдела кадров",color:"a",periods:[]},
+ {name:"Данияр Нурланов",role:"Инженер-эколог",color:"b",periods:[]},
+ {name:"Мария Ким",role:"Бухгалтер",color:"c",periods:[]}
+];
+const holidaySets={
+ 2026:["2026-01-01","2026-01-02","2026-03-08","2026-03-15","2026-03-21","2026-03-22","2026-03-23","2026-05-01","2026-05-07","2026-05-09","2026-07-06","2026-08-30","2026-10-25","2026-12-16"],
+ 2027:["2027-01-01","2027-01-02","2027-03-08","2027-03-15","2027-03-21","2027-03-22","2027-03-23","2027-05-01","2027-05-07","2027-05-09","2027-07-06","2027-08-30","2027-10-25","2027-12-16"],
+ 2028:["2028-01-01","2028-01-02","2028-03-08","2028-03-15","2028-03-21","2028-03-22","2028-03-23","2028-05-01","2028-05-07","2028-05-09","2028-07-06","2028-08-30","2028-10-25","2028-12-16"]
+};
+let holidays=new Set(holidaySets[2027]);
+const iso=d=>{let x=new Date(d);return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`};
+const fromISO=s=>{let [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const plus=(d,n)=>{let x=new Date(d);x.setDate(x.getDate()+n);return x};
+function endDate(start,count){let d=fromISO(start),used=0;while(used<count){if(!holidays.has(iso(d)))used++;if(used<count)d=plus(d,1)}return d}
+function countDays(a,b){let n=0;for(let d=fromISO(a);d<=fromISO(b);d=plus(d,1))if(!holidays.has(iso(d)))n++;return n}
+function overlaps(a,b){return a.start<=b.end&&b.start<=a.end}
+function plan(){
+ const year=+document.querySelector("#year").value, split=+document.querySelector("#split").value;
+ let cursor=fromISO(document.querySelector("#start").value||`${year}-01-11`);
+ people.forEach(p=>p.periods=[]);
+ // Allocate blocks sequentially, with a small recovery gap between vacation blocks.
+ for(let round=0;round<2;round++){
+  for(let i=0;i<people.length;i++){
+   const p=people[i],days=round===0?split:40-split;
+   let s=iso(cursor),e=endDate(s,days);
+   p.periods.push({start:s,end:iso(e),days,eco:round===0?10:0,main:round===0?days-10:days});
+   cursor=plus(e,8);
+  }
+ }
+ render();
+}
+function render(){
+ const root=document.querySelector("#employees");
+ root.innerHTML=people.map((p,i)=>`<div class="employee"><div class="employee-head"><div><strong>${p.name}</strong><div class="role">${p.role}</div></div><span class="status" id="personStatus${i}">40 дней</span></div><div class="periods">${p.periods.map((q,j)=>`<div class="period"><label>${j===0?"Часть 1 — с экологическим отпуском":"Часть 2 — основной отпуск"}</label><input aria-label="Начало отпуска ${p.name}, часть ${j+1}" type="date" value="${q.start}" data-person="${i}" data-period="${j}"><div class="type">${q.eco?`Экологический ${q.eco} + основной ${q.main} дней`:`Основной ${q.main} дней`}</div><div class="small">Окончание: <b>${q.end}</b> · ${q.days} дней отпуска</div></div>`).join("")}</div></div>`).join("");
+ root.querySelectorAll("input").forEach(inp=>inp.addEventListener("change",e=>{
+  let i=+e.target.dataset.person,j=+e.target.dataset.period,days=people[i].periods[j].days;
+  people[i].periods[j].start=e.target.value;
+  people[i].periods[j].end=iso(endDate(e.target.value,days));
+  render();
+ }));
+ renderSummary();renderTimeline();validate();
+}
+function validate(){
+ let problems=[];
+ let all=[];
+ people.forEach((p,i)=>p.periods.forEach((q,j)=>{all.push({...q,person:i,part:j});if(countDays(q.start,q.end)!==q.days)problems.push(`${p.name}: неверная продолжительность части ${j+1}.`)}));
+ for(let i=0;i<all.length;i++)for(let j=i+1;j<all.length;j++)if(all[i].person!==all[j].person&&overlaps(all[i],all[j]))problems.push(`${people[all[i].person].name} и ${people[all[j].person].name}: пересечение ${all[i].start}–${all[i].end} / ${all[j].start}–${all[j].end}.`);
+ people.forEach(p=>{if(p.periods[0].days<14&&p.periods[1].days<14)problems.push(`${p.name}: ни одна часть не достигает 14 дней.`)});
+ const el=document.querySelector("#validation");
+ el.className="alert "+(problems.length?"error":"ok");
+ el.innerHTML=problems.length?"<b>Найдены нарушения:</b><br>"+problems.map(x=>"• "+x).join("<br>"):"<b>Проверка пройдена.</b> Пересечений между сотрудниками нет; продолжительность частей рассчитана с исключением праздничных дней.";
+ people.forEach((p,i)=>{let s=document.querySelector("#personStatus"+i);if(s){s.textContent=p.periods.reduce((a,q)=>a+q.days,0)+" дней";s.className="status"}});
+}
+function renderSummary(){
+ document.querySelector("#summary").innerHTML=`<table><thead><tr><th>Сотрудник</th><th>Часть</th><th>Период</th><th>Дней</th></tr></thead><tbody>${people.map(p=>p.periods.map((q,j)=>`<tr><td>${p.name}</td><td>${j+1}</td><td>${q.start} — ${q.end}</td><td>${q.days}</td></tr>`).join("")).join("")}</tbody></table>`;
+}
+function renderTimeline(){
+ const names=["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
+ document.querySelector("#timeline").innerHTML=names.map((m,mi)=>`<div class="month"><b>${m}</b>${people.map(p=>{let active=p.periods.some(q=>{let a=fromISO(q.start),b=fromISO(q.end),x=new Date(a.getFullYear(),mi,1),z=new Date(a.getFullYear(),mi+1,0);return a<=z&&b>=x});return `<div class="bar ${active?p.color:""}"></div>`}).join("")}</div>`).join("");
+}
+function updateHolidayText(){document.querySelector("#holidays").value=[...holidays].sort().join(", ");document.querySelector("#holidayInfo").textContent=`В расчете используется ${holidays.size} праздничных дат.`}
+document.querySelector("#year").addEventListener("change",e=>{let y=+e.target.value;holidays=new Set(holidaySets[y]);document.querySelector("#start").value=`${y}-01-11`;updateHolidayText();plan()});
+document.querySelector("#generate").onclick=plan;
+document.querySelector("#check").onclick=validate;
+document.querySelector("#print").onclick=()=>window.print();
+document.querySelector("#applyHolidays").onclick=()=>{let vals=document.querySelector("#holidays").value.split(/[,\n;]/).map(x=>x.trim()).filter(Boolean);if(vals.some(x=>!/^\d{4}-\d{2}-\d{2}$/.test(x))){alert("Используйте формат ГГГГ-ММ-ДД, разделяя даты запятыми.");return}holidays=new Set(vals);plan()};
+document.querySelector("#csv").onclick=()=>{let rows=[["Сотрудник","Часть","Начало","Окончание","Дней отпуска","Основной дней","Экологический дней"]];people.forEach(p=>p.periods.forEach((q,j)=>rows.push([p.name,j+1,q.start,q.end,q.days,q.main,q.eco])));let csv="\uFEFF"+rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(";")).join("\r\n");let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="grafik_otpusk.csv";a.click();URL.revokeObjectURL(a.href)};
+updateHolidayText();plan();
+</script>
+</body></html>
